@@ -1,0 +1,33 @@
+#!/bin/bash
+
+for dev in /sys/class/net/* ; do
+	dev=$(basename "$dev")
+	if [ "$dev" == "lo" ] ; then
+		continue
+	fi
+	mac=$(cat /sys/class/net/"${dev}"/address)
+	ip=$(ip addr show "$dev" | grep "inet\b" | awk '{print $2}')
+	carrier="-"
+	if [ "$(cat /sys/class/net/"${dev}"/carrier)" -eq 1 ] ; then
+		carrier="link"
+	fi
+	oper=$(cat /sys/class/net/"${dev}"/operstate)
+	speed=$(cat /sys/class/net/"${dev}"/speed  2>/dev/null)
+	if [ $? -ne 0 ] ; then
+		speed="?"
+	else
+		if [ "$speed" -eq 4294967295 ] ; then
+			speed=0
+		else
+			speed="${speed}M"
+		fi
+	fi
+	flags=$(cat /sys/class/net/"${dev}"/flags)
+	promisc=""
+	if [ $(( flags & 256 )) -ne 0 ] ; then
+		promisc="promisc"
+	fi
+
+
+	printf "%-10s  %s  %-18s  %-5s  %-5s  %-6s %-7s\n" "$dev" "$mac" "$ip" $carrier "$oper" $speed $promisc
+done
