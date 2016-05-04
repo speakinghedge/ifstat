@@ -7,9 +7,15 @@ for dev in /sys/class/net/* ; do
 	fi
 	mac=$(cat /sys/class/net/"${dev}"/address)
 	ip=$(ip addr show "$dev" | grep "inet\b" | awk '{print $2}')
-	carrier="-"
-	if [ "$(cat /sys/class/net/"${dev}"/carrier)" -eq 1 ] ; then
-		carrier="link"
+	carrier="$(cat /sys/class/net/"${dev}"/carrier 2>/dev/null)"
+	if [ $? -ne 0 ] ; then
+		carrier="?"
+	else
+		if [ "$carrier" -eq 1 ] ; then
+			carrier='link'
+		else
+			carrier='-'
+		fi
 	fi
 	oper=$(cat /sys/class/net/"${dev}"/operstate)
 	speed=$(cat /sys/class/net/"${dev}"/speed  2>/dev/null)
